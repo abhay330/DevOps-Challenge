@@ -1,0 +1,14 @@
+---
+app:
+  docroot: /webapps/devops
+  repourl: https://bitbucket.org/azneita/devops-challenge.git
+  repoversion: master
+  requirementFile: /webapps/devops/requirements.txt
+  user: appUser
+  appname: App
+  confpath: /etc/init/app.conf
+  serviceName: app
+  apppath: /webapps/devops/app.py
+  logpath: /var/log/upstart/app.log
+  logrotatedir: /etc/logrotate.d/app
+  timezone: UTC

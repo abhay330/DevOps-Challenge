@@ -1,0 +1,57 @@
+  #Install GIT on VM to perform GIT actions
+  - name: Install GIT 
+    apt:
+      name: git
+      state: present
+      update_cache: yes 
+    with_items:
+      - git  
+  #Create directory /webapps/devops
+  - name: Create APP directory webapps/devops
+    file:
+      path: "{{ app.docroot }}"
+      state: directory
+  #Clone github repo (https://bitbucket.org/azneita/devops-challenge.git) into the VM under /webapps/devops
+  - name: Checkout Bitbucket Repository to App Directory webapps/devops
+    git:
+      repo: "{{ app.repourl }}"
+      dest: "{{ app.docroot }}"
+      version: "{{ app.repoversion }}"
+  #Install system packages needed by the app
+  - name: Install APP requirements
+    pip:
+      requirements: "{{ app.requirementFile }}"
+  #Create a non-privileged user   
+  - name: Create non-privileged user to run APP
+    user:
+      name: "{{ app.user }}"
+      createhome: yes
+      state: present
+  # Ensure app automatically restarted if crashes or if killed
+  - name: Create App Configuration File in /etc/init directory
+    file:
+      path: "{{ app.confpath }}"
+      state: touch
+  - name: Add contents to /etc/init/app.conf file to ensure App restart on crash or kill
+    copy:
+      dest: "{{ app.confpath }}"
+      content: "description \"{{ app.appname }}\"\nstart on runlevel [2345]\nstop on runlevel [!2345]\nrespawn\nexec sudo -u {{ app.user}} {{ app.apppath }}"
+  # Starting the App as a service
+  - name: Start APP service on host 
+    service:
+      name: "{{ app.serviceName }}"
+      state: started
+      enabled: yes
+  # Setting log rotate for the App logs
+  - name: Create App Log rotate File in /etc/logrotate.d directory to ensure log rotation daily
+    file:
+      path: "{{ app.logrotatedir }}"
+      state: touch
+  - name: Add contents to file /etc/logrotate.d/app
+    copy:
+      dest: "{{ app.logrotatedir }}"
+      content: "{{ app.logpath }} {\n  daily\n  rotate 12\n  compress\n  missingok\n  notifempty\n}"
+  # Setting system timezone to UTC
+  - name: Set system timezone to UTC
+    timezone:
+      hwclock: "{{ app.timezone }}"  
